@@ -12,6 +12,7 @@ class ListViewController: UIViewController {
     
 //    var creatrues = ["pikachu", "snorla", "bulbasaur", "wigglytuff"]
     
+    var activityIndicator = UIActivityIndicatorView()
     var creatures = Creatures()
     
     override func viewDidLoad() {
@@ -21,15 +22,29 @@ class ListViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
         
+        setupActivityIndicator()
+        activityIndicator.startAnimating()
+        self.view.isUserInteractionEnabled = false
+        
         creatures.getData {
             DispatchQueue.main.async {
                 self.navigationItem.title = "\(self.creatures.creatureArray.count) of \(self.creatures.count) Pokemon"
                 self.tableView.reloadData()
+                self.activityIndicator.stopAnimating()
+                self.view.isUserInteractionEnabled = true
             }
         }
         
     }
 
+    func setupActivityIndicator() {
+        activityIndicator.center = self.view.center
+        activityIndicator.hidesWhenStopped = true
+        activityIndicator.style = .large
+        activityIndicator.color = UIColor.red
+        view.addSubview(activityIndicator)
+    }
+    
     func loadAll() {
         if creatures.urlString.hasPrefix("http") {
             creatures.getData {
@@ -41,14 +56,21 @@ class ListViewController: UIViewController {
                 self.loadAll()
             }
         } else {
-            print("All done - all loaded. Total Pokemon = \(creatures.creatureArray.count)")
+            DispatchQueue.main.async {
+                print("All done - all loaded. Total Pokemon = \(self.creatures.creatureArray.count)")
+                self.activityIndicator.stopAnimating()
+                self.view.isUserInteractionEnabled = true
+            }
+            
+            
         }
         
     }
     
 
     @IBAction func loadAllButtonPressed(_ sender: UIBarButtonItem) {
-        
+        activityIndicator.startAnimating()
+        self.view.isUserInteractionEnabled = false
         loadAll()
         
     }
@@ -68,6 +90,9 @@ extension ListViewController: UITableViewDelegate, UITableViewDataSource {
 //        print("\(indexPath.row + 1) of \(creatures.creatureArray.count)")
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
         if indexPath.row == creatures.creatureArray.count - 1 && creatures.urlString.hasPrefix("http") {
+            
+            activityIndicator.startAnimating()
+            self.view.isUserInteractionEnabled = false
             creatures.getData {
                 DispatchQueue.main.async {
                     self.navigationItem.title = "\(self.creatures.creatureArray.count) of \(self.creatures.count) Pokemon"
